@@ -1,0 +1,55 @@
+version: "3.7"
+networks:
+  frontend:
+      name: network_frontend
+
+services:
+    webserver:
+        container_name: TK1_vhost
+        image: nginx:latest
+        restart: always
+        ports:
+            - "8282:80"
+        volumes:
+            - ./:/var/www/html
+            - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - frontend
+        depends_on:
+            - TK-1
+    db:
+      image: mariadb:10.5.8
+      container_name: database_tk1
+      restart: always
+      environment:
+        MYSQL_DATABASE: 'tk1'
+        # So you don't have to use root, but you can if you like
+        MYSQL_USER: 'user'
+        # You can use whatever password you like
+        MYSQL_PASSWORD: 'password'
+        # Password for root access
+        MYSQL_ROOT_PASSWORD: 'password'
+      ports:
+        # <Port exposed> : <MySQL Port running inside container>
+        - '3306:3306'
+      networks:
+        - frontend
+        # Where our data will be persisted
+      volumes:
+        - dbdata:/var/lib/mysql
+
+    TK-1:
+      container_name: TK1_app
+      image: tugas_kelompok
+      build: ./docker
+      restart: always
+      working_dir: /var/www/html
+      volumes:
+        - ./:/var/www/html
+      networks:
+        - frontend
+      depends_on:
+        - db
+
+volumes:
+  dbdata:
